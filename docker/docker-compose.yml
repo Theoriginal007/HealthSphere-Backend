@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # FastAPI app
+  app:
+    build: .
+    container_name: healthsphere_backend
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/healthsphere
+      - MONGO_URI=mongodb://mongo:27017/healthsphere
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - mongo
+    networks:
+      - healthsphere_network
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DEBUG=True
+
+  # PostgreSQL service
+  postgres:
+    image: postgres:latest
+    container_name: healthsphere_postgres
+    environment:
+      POSTGRES_DB: healthsphere
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - healthsphere_network
+    restart: unless-stopped
+
+  # MongoDB service
+  mongo:
+    image: mongo:latest
+    container_name: healthsphere_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - healthsphere_network
+    restart: unless-stopped
+
+  # Celery worker (optional if using Celery for background tasks)
+  celery:
+    build: .
+    container_name: healthsphere_celery
+    command: celery -A healthapp.celery_app worker --loglevel=info
+    depends_on:
+      - app
+    networks:
+      - healthsphere_network
+    restart: unless-stopped
+
+  # Redis service (if using Redis as a message broker for Celery)
+  redis:
+    image: redis:alpine
+    container_name: healthsphere_redis
+    networks:
+      - healthsphere_network
+    restart: unless-stopped
+
+# Persistent storage volumes for PostgreSQL and MongoDB
+volumes:
+  postgres_data:
+  mongo_data:
+
+# Define the Docker network to allow inter-service communication
+networks:
+  healthsphere_network:
+    driver: bridge

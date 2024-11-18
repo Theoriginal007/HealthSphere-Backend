@@ -1,0 +1,25 @@
+# .gitignore
+
+# Python bytecode
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+
+# Django migrations
+*/migrations/*
+
+# Database files
+*.sqlite3
+
+# VSCode settings
+.vscode/
+
+# PyCharm settings
+.idea/
+
+# Celery and Redis logs
+celerybeat-schedule
+*.log
